@@ -1,0 +1,448 @@
+rules:
+  - id: raw-html-format
+    languages:
+      - go
+    severity: WARNING
+    message: Detected user input flowing into a manually constructed HTML string.
+      You may be accidentally bypassing secure methods of rendering HTML by
+      manually constructing HTML and this could create a cross-site scripting
+      vulnerability, which could let attackers steal sensitive user data. Use
+      the `html/template` package which will safely render HTML instead, or
+      inspect that the HTML is rendered safely.
+    metadata:
+      cwe:
+        - "CWE-79: Improper Neutralization of Input During Web Page Generation
+          ('Cross-site Scripting')"
+      owasp:
+        - A07:2017 - Cross-Site Scripting (XSS)
+        - A03:2021 - Injection
+      category: security
+      technology:
+        - go
+      references:
+        - https://blogtitle.github.io/robn-go-security-pearls-cross-site-scripting-xss/
+      confidence: MEDIUM
+      cwe2022-top25: true
+      cwe2021-top25: true
+      subcategory:
+        - vuln
+      likelihood: HIGH
+      impact: MEDIUM
+      license: Semgrep Rules License v1.0. For more details, visit
+        semgrep.dev/legal/rules-license
+      vulnerability_class:
+        - Cross-Site-Scripting (XSS)
+    mode: taint
+    pattern-sources:
+      - patterns:
+          - pattern-either:
+              - pattern: |
+                  ($REQUEST : *http.Request).$ANYTHING
+              - pattern: |
+                  ($REQUEST : http.Request).$ANYTHING
+          - metavariable-regex:
+              metavariable: $ANYTHING
+              regex: ^(BasicAuth|Body|Cookie|Cookies|Form|FormValue|GetBody|Host|MultipartReader|ParseForm|ParseMultipartForm|PostForm|PostFormValue|Referer|RequestURI|Trailer|TransferEncoding|UserAgent|URL)$
+    pattern-sanitizers:
+      - pattern: html.EscapeString(...)
+    pattern-sinks:
+      - patterns:
+          - pattern-either:
+              - pattern: fmt.Printf("$HTMLSTR", ...)
+              - pattern: fmt.Sprintf("$HTMLSTR", ...)
+              - pattern: fmt.Fprintf($W, "$HTMLSTR", ...)
+              - pattern: '"$HTMLSTR" + ...'
+          - metavariable-pattern:
+              metavariable: $HTMLSTR
+              language: generic
+              pattern: <$TAG ...
+  - id: session-cookie-missing-secure
+    patterns:
+      - pattern-not-inside: |
+          &sessions.Options{
+            ...,
+            Secure: true,
+            ...,
+          }
+      - pattern: |
+          &sessions.Options{
+            ...,
+          }
+    message: A session cookie was detected without setting the 'Secure' flag. The
+      'secure' flag for cookies prevents the client from transmitting the cookie
+      over insecure channels such as HTTP. Set the 'Secure' flag by setting
+      'Secure' to 'true' in the Options struct.
+    metadata:
+      cwe:
+        - "CWE-614: Sensitive Cookie in HTTPS Session Without 'Secure' Attribute"
+      owasp:
+        - A05:2021 - Security Misconfiguration
+      references:
+        - https://github.com/0c34/govwa/blob/139693e56406b5684d2a6ae22c0af90717e149b8/user/session/session.go#L69
+      category: security
+      technology:
+        - gorilla
+      confidence: MEDIUM
+      subcategory:
+        - audit
+      likelihood: LOW
+      impact: LOW
+      license: Semgrep Rules License v1.0. For more details, visit
+        semgrep.dev/legal/rules-license
+      vulnerability_class:
+        - Cookie Security
+    fix-regex:
+      regex: (Secure\s*:\s+)false
+      replacement: \1true
+    severity: WARNING
+    languages:
+      - go
+
+  - id: session-cookie-samesitenone
+    patterns:
+      - pattern-inside: |
+          &sessions.Options{
+            ...,
+            SameSite: http.SameSiteNoneMode,
+            ...,
+          }
+      - pattern: |
+          &sessions.Options{
+            ...,
+          }
+    message: Found SameSiteNoneMode setting in Gorilla session options. Consider
+      setting SameSite to Lax, Strict or Default for enhanced security.
+    metadata:
+      cwe:
+        - "CWE-1275: Sensitive Cookie with Improper SameSite Attribute"
+      owasp:
+        - A05:2021 - Security Misconfiguration
+      references:
+        - https://pkg.go.dev/github.com/gorilla/sessions#Options
+      category: security
+      technology:
+        - gorilla
+      confidence: MEDIUM
+      subcategory:
+        - audit
+      likelihood: LOW
+      impact: LOW
+      license: Semgrep Rules License v1.0. For more details, visit
+        semgrep.dev/legal/rules-license
+      vulnerability_class:
+        - Cookie Security
+    fix-regex:
+      regex: (SameSite\s*:\s+)http.SameSiteNoneMode
+      replacement: \1http.SameSiteDefaultMode
+    severity: WARNING
+    languages:
+      - go
+
+  - id: session-cookie-missing-secure
+    patterns:
+      - pattern-not-inside: |
+          &sessions.Options{
+            ...,
+            Secure: true,
+            ...,
+          }
+      - pattern: |
+          &sessions.Options{
+            ...,
+          }
+    message: A session cookie was detected without setting the 'Secure' flag. The
+      'secure' flag for cookies prevents the client from transmitting the cookie
+      over insecure channels such as HTTP. Set the 'Secure' flag by setting
+      'Secure' to 'true' in the Options struct.
+    metadata:
+      cwe:
+        - "CWE-614: Sensitive Cookie in HTTPS Session Without 'Secure' Attribute"
+      owasp:
+        - A05:2021 - Security Misconfiguration
+      references:
+        - https://github.com/0c34/govwa/blob/139693e56406b5684d2a6ae22c0af90717e149b8/user/session/session.go#L69
+      category: security
+      technology:
+        - gorilla
+      confidence: MEDIUM
+      subcategory:
+        - audit
+      likelihood: LOW
+      impact: LOW
+      license: Semgrep Rules License v1.0. For more details, visit
+        semgrep.dev/legal/rules-license
+      vulnerability_class:
+        - Cookie Security
+    fix-regex:
+      regex: (Secure\s*:\s+)false
+      replacement: \1true
+    severity: WARNING
+    languages:
+      - go
+
+  - id: session-cookie-missing-httponly
+    patterns:
+      - pattern-not-inside: |
+          &sessions.Options{
+            ...,
+            HttpOnly: true,
+            ...,
+          }
+      - pattern: |
+          &sessions.Options{
+            ...,
+          }
+    message: A session cookie was detected without setting the 'HttpOnly' flag. The
+      'HttpOnly' flag for cookies instructs the browser to forbid client-side
+      scripts from reading the cookie which mitigates XSS attacks. Set the
+      'HttpOnly' flag by setting 'HttpOnly' to 'true' in the Options struct.
+    metadata:
+      cwe:
+        - "CWE-1004: Sensitive Cookie Without 'HttpOnly' Flag"
+      owasp:
+        - A05:2021 - Security Misconfiguration
+      references:
+        - https://github.com/0c34/govwa/blob/139693e56406b5684d2a6ae22c0af90717e149b8/user/session/session.go#L69
+      category: security
+      technology:
+        - gorilla
+      confidence: MEDIUM
+      subcategory:
+        - audit
+      likelihood: LOW
+      impact: LOW
+      license: Semgrep Rules License v1.0. For more details, visit
+        semgrep.dev/legal/rules-license
+      vulnerability_class:
+        - Cookie Security
+    fix-regex:
+      regex: (HttpOnly\s*:\s+)false
+      replacement: \1true
+    severity: WARNING
+    languages:
+      - go
+
+  - id: cookie-missing-secure
+    patterns:
+      - pattern-not-inside: |
+          http.Cookie{
+            ...,
+            Secure: true,
+            ...,
+          }
+      - pattern: |
+          http.Cookie{
+            ...,
+          }
+    message: A session cookie was detected without setting the 'Secure' flag. The
+      'secure' flag for cookies prevents the client from transmitting the cookie
+      over insecure channels such as HTTP. Set the 'Secure' flag by setting
+      'Secure' to 'true' in the Options struct.
+    metadata:
+      cwe:
+        - "CWE-614: Sensitive Cookie in HTTPS Session Without 'Secure' Attribute"
+      owasp:
+        - A05:2021 - Security Misconfiguration
+      references:
+        - https://github.com/0c34/govwa/blob/139693e56406b5684d2a6ae22c0af90717e149b8/util/cookie.go
+        - https://golang.org/src/net/http/cookie.go
+      category: security
+      technology:
+        - go
+      confidence: MEDIUM
+      subcategory:
+        - vuln
+      likelihood: LOW
+      impact: LOW
+      license: Semgrep Rules License v1.0. For more details, visit
+        semgrep.dev/legal/rules-license
+      vulnerability_class:
+        - Cookie Security
+    fix-regex:
+      regex: (Secure\s*:\s+)false
+      replacement: \1true
+    severity: WARNING
+    languages:
+      - go
+
+  - id: go.lang.security.audit.net.cookie-missing-httponly.cookie-missing-httponly
+    patterns:
+      - pattern-not-inside: |
+          http.Cookie{
+            ...,
+            HttpOnly: true,
+            ...,
+          }
+      - pattern: |
+          http.Cookie{
+            ...,
+          }
+    message: A session cookie was detected without setting the 'HttpOnly' flag. The
+      'HttpOnly' flag for cookies instructs the browser to forbid client-side
+      scripts from reading the cookie which mitigates XSS attacks. Set the
+      'HttpOnly' flag by setting 'HttpOnly' to 'true' in the Cookie.
+    metadata:
+      cwe:
+        - "CWE-1004: Sensitive Cookie Without 'HttpOnly' Flag"
+      owasp:
+        - A05:2021 - Security Misconfiguration
+      references:
+        - https://github.com/0c34/govwa/blob/139693e56406b5684d2a6ae22c0af90717e149b8/util/cookie.go
+        - https://golang.org/src/net/http/cookie.go
+      category: security
+      technology:
+        - go
+      confidence: MEDIUM
+      subcategory:
+        - vuln
+      likelihood: LOW
+      impact: LOW
+      license: Semgrep Rules License v1.0. For more details, visit
+        semgrep.dev/legal/rules-license
+      vulnerability_class:
+        - Cookie Security
+    fix-regex:
+      regex: (HttpOnly\s*:\s+)false
+      replacement: \1true
+    severity: WARNING
+    languages:
+      - go
+
+  - id: session-cookie-samesitenone
+    patterns:
+      - pattern-inside: |
+          &sessions.Options{
+            ...,
+            SameSite: http.SameSiteNoneMode,
+            ...,
+          }
+      - pattern: |
+          &sessions.Options{
+            ...,
+          }
+    message: Found SameSiteNoneMode setting in Gorilla session options. Consider
+      setting SameSite to Lax, Strict or Default for enhanced security.
+    metadata:
+      cwe:
+        - "CWE-1275: Sensitive Cookie with Improper SameSite Attribute"
+      owasp:
+        - A05:2021 - Security Misconfiguration
+      references:
+        - https://pkg.go.dev/github.com/gorilla/sessions#Options
+      category: security
+      technology:
+        - gorilla
+      confidence: MEDIUM
+      subcategory:
+        - audit
+      likelihood: LOW
+      impact: LOW
+      license: Semgrep Rules License v1.0. For more details, visit
+        semgrep.dev/legal/rules-license
+      vulnerability_class:
+        - Cookie Security
+    fix-regex:
+      regex: (SameSite\s*:\s+)http.SameSiteNoneMode
+      replacement: \1http.SameSiteDefaultMode
+    severity: WARNING
+    languages:
+      - go
+
+  - id: use-of-md5
+    message: Detected MD5 hash algorithm which is considered insecure. MD5 is not
+      collision resistant and is therefore not suitable as a cryptographic
+      signature. Use SHA256 or SHA3 instead.
+    languages:
+      - go
+    severity: WARNING
+    metadata:
+      owasp:
+        - A03:2017 - Sensitive Data Exposure
+        - A02:2021 - Cryptographic Failures
+      cwe:
+        - "CWE-328: Use of Weak Hash"
+      source-rule-url: https://github.com/securego/gosec#available-rules
+      category: security
+      technology:
+        - go
+      confidence: MEDIUM
+      references:
+        - https://owasp.org/Top10/A02_2021-Cryptographic_Failures
+      subcategory:
+        - vuln
+      likelihood: MEDIUM
+      impact: MEDIUM
+      license: Semgrep Rules License v1.0. For more details, visit
+        semgrep.dev/legal/rules-license
+      vulnerability_class:
+        - Insecure Hashing Algorithm
+    patterns:
+      - pattern-inside: |
+          import "crypto/md5"
+          ...
+      - pattern-either:
+          - pattern: |
+              md5.New()
+          - pattern: |
+              md5.Sum(...)
+
+  - id: formatted-template-string
+    message: Found a formatted template string passed to 'template.HTML()'.
+      'template.HTML()' does not escape contents. Be absolutely sure there is no
+      user-controlled data in this template. If user data can reach this
+      template, you may have a XSS vulnerability.
+    metadata:
+      cwe:
+        - "CWE-79: Improper Neutralization of Input During Web Page Generation
+          ('Cross-site Scripting')"
+      owasp:
+        - A07:2017 - Cross-Site Scripting (XSS)
+        - A03:2021 - Injection
+      references:
+        - https://golang.org/pkg/html/template/#HTML
+      category: security
+      technology:
+        - go
+      confidence: MEDIUM
+      cwe2022-top25: true
+      cwe2021-top25: true
+      subcategory:
+        - audit
+      likelihood: LOW
+      impact: MEDIUM
+      license: Semgrep Rules License v1.0. For more details, visit
+        semgrep.dev/legal/rules-license
+      vulnerability_class:
+        - Cross-Site-Scripting (XSS)
+    languages:
+      - go
+    severity: WARNING
+    patterns:
+      - pattern-not: template.HTML("..." + "...")
+      - pattern-either:
+          - pattern: template.HTML($T + $X, ...)
+          - pattern: template.HTML(fmt.$P("...", ...), ...)
+          - pattern: |
+              $T = "..."
+              ...
+              $T = $FXN(..., $T, ...)
+              ...
+              template.HTML($T, ...)
+          - pattern: |
+              $T = fmt.$P("...", ...)
+              ...
+              template.HTML($T, ...)
+          - pattern: |
+              $T, $ERR = fmt.$P("...", ...)
+              ...
+              template.HTML($T, ...)
+          - pattern: |
+              $T = $X + $Y
+              ...
+              template.HTML($T, ...)
+          - pattern: |-
+              $T = "..."
+              ...
+              $OTHER, $ERR = fmt.$P(..., $T, ...)
+              ...
+              template.HTML($OTHER, ...)
