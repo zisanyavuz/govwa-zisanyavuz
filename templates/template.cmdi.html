@@ -1,0 +1,33 @@
+{{define "template.cmdi"}} {{template "template.header" .}} {{template "template.sidebar" .}}
+<div class="col-md-9">
+    <div class="panel panel-primary">
+        <div class="panel-heading">Command Injection Vulnerability</div>
+        <div class="panel-body">
+            <div class="pnl">
+                <p>Ping a host and view the output.</p>
+                <p>On the <strong>low</strong> level, the host value is injected directly into a shell command string.<br>
+                   Try: <code>127.0.0.1; cat /etc/passwd</code></p>
+                <div class="well">
+                    <form method="POST">
+                        <div class="form-group">
+                            <label style="color:#428bca;font-family:Open Sans;font-weight:500">Host / IP:</label>
+                            <input type="text" class="form-control" name="host" value="{{.host}}" placeholder="e.g. 127.0.0.1">
+                        </div>
+                        <input type="submit" class="btn btn-primary" value="Ping">
+                    </form>
+                    {{if .error}}
+                    <div class="alert alert-danger" style="margin-top:10px">{{.error}}</div>
+                    {{end}}
+                    {{if .output}}
+                    <pre style="margin-top:10px">{{.output}}</pre>
+                    {{end}}
+                </div>
+                <div class="more-info">
+                    <span>More Info:</span>
+                    <a target="_blank" href="https://owasp.org/www-community/attacks/Command_Injection">https://owasp.org/www-community/attacks/Command_Injection</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{template "template.footer"}} {{ end }}

@@ -12,10 +12,14 @@ import (
 	"github.com/govwa/util"
 	"github.com/govwa/util/config"
 	"github.com/govwa/util/middleware"
+	"github.com/govwa/vulnerability/cmdi"
 	"github.com/govwa/vulnerability/csa"
 	"github.com/govwa/vulnerability/idor"
+	"github.com/govwa/vulnerability/pathtraversal"
 	"github.com/govwa/vulnerability/sqli"
+	"github.com/govwa/vulnerability/ssrf"
 	"github.com/govwa/vulnerability/xss"
+	"github.com/govwa/vulnerability/xxe"
 )
 
 const (
@@ -53,6 +57,10 @@ func main() {
 	xss := xss.New()
 	idor := idor.New()
 	csa := csa.New()
+	xxe := xxe.New()
+	cmdi := cmdi.New()
+	pt := pathtraversal.New()
+	ssrf := ssrf.New()
 	setup := setup.New()
 	setting := setting.New()
 
@@ -65,6 +73,10 @@ func main() {
 	xss.SetRouter(router)
 	idor.SetRouter(router)
 	csa.SetRouter(router)
+	xxe.SetRouter(router)
+	cmdi.SetRouter(router)
+	pt.SetRouter(router)
+	ssrf.SetRouter(router)
 	setup.SetRouter(router)
 	setting.SetRouter(router)
 
