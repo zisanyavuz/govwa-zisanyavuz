@@ -1,0 +1,36 @@
+{{define "template.ssrf"}} {{template "template.header" .}} {{template "template.sidebar" .}}
+<div class="col-md-9">
+    <div class="panel panel-primary">
+        <div class="panel-heading">Server-Side Request Forgery (SSRF)</div>
+        <div class="panel-body">
+            <div class="pnl">
+                <p>Fetch a URL from the server side.</p>
+                <p>On the <strong>low</strong> level, any URL is fetched without restriction.<br>
+                   Try: <code>http://169.254.169.254/latest/meta-data/</code> or <code>http://localhost/</code></p>
+                <div class="well">
+                    <form method="POST">
+                        <div class="form-group">
+                            <label style="color:#428bca;font-family:Open Sans;font-weight:500">Target URL:</label>
+                            <input type="text" class="form-control" name="url" value="{{.url}}" placeholder="e.g. https://example.com">
+                        </div>
+                        <input type="submit" class="btn btn-primary" value="Fetch">
+                    </form>
+                    {{if .error}}
+                    <div class="alert alert-danger" style="margin-top:10px">{{.error}}</div>
+                    {{end}}
+                    {{if .status}}
+                    <p style="margin-top:10px"><strong>Status:</strong> {{.status}}</p>
+                    {{end}}
+                    {{if .response}}
+                    <pre style="margin-top:5px;max-height:400px;overflow:auto">{{.response}}</pre>
+                    {{end}}
+                </div>
+                <div class="more-info">
+                    <span>More Info:</span>
+                    <a target="_blank" href="https://owasp.org/www-community/attacks/Server_Side_Request_Forgery">https://owasp.org/www-community/attacks/Server_Side_Request_Forgery</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{template "template.footer"}} {{ end }}
